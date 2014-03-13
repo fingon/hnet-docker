@@ -5,6 +5,9 @@ DOCKERCLEANS?=$(DOCKERSUBDIRS:%=%.clean)
 
 all: $(DOCKERBUILDS)
 
+dsh: all
+	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t d-hnet-netkit-env /bin/bash
+
 clean: $(DOCKERCLEANS)
 
 rmexited:
