@@ -9,6 +9,11 @@ Known dependencies:
 - git (to get this)
 - make
 
+Assumptions:
+
+- hnet repository clone at $(HOME)/hnet
+- hnet/netkit/fs has been built (i.o.w. 'make filesystem' done there)
+
 Features:
 
 + Debian-based ~development setup
