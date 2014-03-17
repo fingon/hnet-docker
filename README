@@ -1,0 +1,26 @@
+This is somewhat different take on how to use Docker; instead of
+shipping binary images (well, obviously, you can, if you want to, but
+I'd rather not), use this Dockerfile hierarchy to build your own
+'hnet' test/play environment!
+
+Known dependencies:
+
+- docker.io (usable as 'docker')
+- git (to get this)
+- make
+
+Features:
+
++ Debian-based ~development setup
+ + stable (aka wheezy aka 7.X)
+
++ Ubuntu-based ~development setup
+ + LTS (aka 12.04)
+
+- Buildbot 
+ - master (using Debian stable)
+ - slaves running <X> setup and building the 'generic' version
+ - slave running Debian and building OpenWRT two versions
+  - 'trunk' (from official routing + other repositories)
+  - 'latest' (from hnet-routing fork)
+
