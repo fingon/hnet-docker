@@ -23,7 +23,12 @@ rm-exited:
 	docker rm `docker ps -a | grep Exit | cut -d ' ' -f 1` 2>/dev/null || true
 
 rmi-none:
-	docker rmi `docker images | grep '<none>' | cut -d ' ' -f 1` 2>/dev/null || true
+	docker rmi `docker images | grep '<none>' | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3` 2>/dev/null || true
+
+u-base.docker: u-base-rsync
+
+u-base-rsync:
+	rsync -a $(wildcard d-base/*.sh) u-base
 
 u-hnet: d-hnet
 	mkdir $@
