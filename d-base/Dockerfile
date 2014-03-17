@@ -1,5 +1,5 @@
-## -*- docker-image-name: "d-dev" -*-
-FROM debian
+## -*- docker-image-name: "d-base" -*-
+FROM debian:stable
 MAINTAINER "Markus Stenberg <fingon@iki.fi>"
 RUN mkdir -p /usr/local
 ADD . /usr/local/

@@ -1,4 +1,4 @@
-DOCKERSUBDIRS=d-dev d-hnet-dev d-hnet-netkit-env
+DOCKERSUBDIRS=d-base d-hnet d-hnet-netkit
 
 DOCKERBUILDS?=$(DOCKERSUBDIRS:%=%.docker)
 DOCKERCLEANS?=$(DOCKERSUBDIRS:%=%.clean)
@@ -6,7 +6,7 @@ DOCKERCLEANS?=$(DOCKERSUBDIRS:%=%.clean)
 all: $(DOCKERBUILDS)
 
 dsh: all
-	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t d-hnet-netkit-env /bin/bash
+	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t d-hnet-netkit /bin/bash
 
 clean: $(DOCKERCLEANS)
 
