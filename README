@@ -18,9 +18,9 @@ Features:
  + LTS (aka 12.04)
 
 - Buildbot 
- - master (using Debian stable)
+ + master (using Debian stable)
  - slaves running <X> setup and building the 'generic' version
- - slave running Debian and building OpenWRT two versions
+ - slave running Debian and building two OpenWRT versions
   - 'trunk' (from official routing + other repositories)
   - 'latest' (from hnet-routing fork)
 

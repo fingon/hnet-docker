@@ -1,6 +1,7 @@
 DOCKERSUBDIRS=\
   d-base d-hnet d-hnet-netkit \
-  u-base u-hnet u-hnet-netkit
+  u-base u-hnet u-hnet-netkit \
+  buildbot-master
 
 # u-base is as-is (too much diff to d-base).
 # u-hnet and u-hnet-netkit are created as copies of d-hnet*, and then modified
@@ -11,13 +12,20 @@ DOCKERCLEANS?=$(DOCKERSUBDIRS:%=%.clean)
 
 all: $(DOCKERBUILDS)
 
-dsh: all
+bb-start: buildbot-master.docker
+	docker start bb-master || \
+          docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet buildbot-master
+
+bb-stop:
+	docker stop bb-master || true
+
+dsh: d-hnet-netkit.docker
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t d-hnet-netkit /bin/bash
 
-ush: all
+ush: u-hnet-netkit.docker
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t u-hnet-netkit /bin/bash
 
-clean: $(DOCKERCLEANS) uclean rmi-none
+clean: bb-stop $(DOCKERCLEANS) uclean rmi-none
 
 rm-exited:
 	docker rm `docker ps -a | grep Exit | cut -d ' ' -f 1` 2>/dev/null || true
@@ -50,6 +58,7 @@ uclean:
 	-docker rmi $*
 
 # Manual dependencies (so we can use make -j N)
+buildbot-master.docker: d-base.docker
 d-hnet.docker: d-base.docker
 d-hnet-netkit.docker: d-hnet.docker
 u-hnet.docker: u-base.docker
