@@ -12,9 +12,11 @@ DOCKERCLEANS?=$(DOCKERSUBDIRS:%=%.clean)
 
 all: $(DOCKERBUILDS)
 
-start: bb-start dbb-start ubb-start
+start: rm-exited bb-start dbb-start ubb-start
 
 stop: bb-stop dbb-stop ubb-stop
+
+kill: bb-kill dbb-kill ubb-kill
 
 dbb-start: d-bb.docker bb-start
 	./ensure-started.sh d-bb-slave || \
@@ -41,6 +43,15 @@ dbb-stop:
 
 ubb-stop:
 	-docker stop u-bb-slave
+
+bb-kill:
+	-docker kill bb-master
+
+dbb-kill:
+	-docker kill d-bb-slave
+
+ubb-kill:
+	-docker kill u-bb-slave
 
 dsh: d-hnet-netkit.docker
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t d-hnet-netkit /bin/bash
