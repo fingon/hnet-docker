@@ -1,57 +1,41 @@
 DOCKERSUBDIRS=\
   d-base d-hnet d-hnet-netkit \
+  t-base t-hnet t-hnet-netkit \
   u-base u-hnet u-hnet-netkit \
   buildbot-master d-bb u-bb
 
 # u-base is as-is (too much diff to d-base).
 # u-hnet and u-hnet-netkit are created as copies of d-hnet*, and then modified
-MADESUBDIRS=u-hnet u-hnet-netkit u-bb
+MADESUBDIRS=\
+  t-hnet t-hnet-netkit t-bb \
+  u-hnet u-hnet-netkit u-bb
 
-DOCKERBUILDS?=$(DOCKERSUBDIRS:%=%.docker)
-DOCKERCLEANS?=$(DOCKERSUBDIRS:%=%.clean)
+all: $(DOCKERSUBDIRS:%=%.docker)
 
-all: $(DOCKERBUILDS)
+## Buildbot targets
 
-start: rm-exited bb-start dbb-start ubb-start
+BUILDSLAVES=d-bb t-bb u-bb
 
-stop: bb-stop dbb-stop ubb-stop
+start: rm-exited bb-master.start $(BUILDSLAVES:%=%-slave.start)
+	@true
 
-kill: bb-kill dbb-kill ubb-kill
+stop: bb-master.stop $(BUILDSLAVES:%=%-slave.stop)
+	@true
 
-dbb-start: d-bb.docker bb-start
-	./ensure-started.sh d-bb-slave || \
-          docker run --name d-bb-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro d-bb
+kill: bb-master.kill $(BUILDSLAVES:%=%-slave.kill)
+	@true
 
-dbbsh: d-bb.docker
-	docker run --link bb-master:master -i -t -v $(HOME)/hnet:/host-hnet:ro d-bb /bin/bash
-
-ubb-start: u-bb.docker bb-start
-	./ensure-started.sh u-bb-slave || \
-          docker run --name u-bb-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro u-bb
-
-ubbsh: u-bb.docker
-	docker run --link bb-master:master -i -t -v $(HOME)/hnet:/host-hnet:ro u-bb /bin/bash
-bb-start: buildbot-master.docker
+# master
+bb-master.start: buildbot-master.docker
 	./ensure-started.sh bb-master || \
           docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro buildbot-master
 
-bb-stop:
-	-docker stop bb-master
+# slaves
+%-slave.start: %.docker bb-master.start
+	./ensure-started.sh $*-slave || \
+          docker run --name $*-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro $*
 
-dbb-stop:
-	-docker stop d-bb-slave
-
-ubb-stop:
-	-docker stop u-bb-slave
-
-bb-kill:
-	-docker kill bb-master
-
-dbb-kill:
-	-docker kill d-bb-slave
-
-ubb-kill:
-	-docker kill u-bb-slave
+# Netkit utilities
 
 dsh: d-hnet-netkit.docker
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t d-hnet-netkit /bin/bash
@@ -59,13 +43,42 @@ dsh: d-hnet-netkit.docker
 ush: u-hnet-netkit.docker
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t u-hnet-netkit /bin/bash
 
-clean:    stop $(DOCKERCLEANS) uclean rmi-none
+clean:    kill rm-exited $(DOCKERSUBDIRS:%=%.clean) uclean rmi-none
 
 rm-exited:
 	docker rm `docker ps -a | grep Exit | cut -d ' ' -f 1` 2>/dev/null || true
 
 rmi-none:
 	docker rmi `docker images | grep '<none>' | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3` 2>/dev/null || true
+
+# Testing target (derived from Debian, but not quite the same)
+
+t-base.docker: t-base-rsync
+
+t-base-rsync:
+	rsync -a $(wildcard d-base/*.sh) t-base
+
+t-hnet: d-hnet
+	mkdir $@
+	perl -pe 's/d-base/t-base/g' < d-hnet/Dockerfile | \
+	perl -pe 's/d-hnet/t-hnet/g' > $@/Dockerfile
+
+t-bb: d-bb
+	mkdir $@
+	perl -pe 's/d-hnet/t-hnet/g' < d-bb/Dockerfile | \
+	perl -pe 's/debian/testing/g' | \
+	perl -pe 's/d-bb/t-bb/g' \
+		> $@/Dockerfile
+	cp $(wildcard d-bb/*.sh) $@
+	cp $(wildcard d-bb/*.py) $@
+
+t-hnet-netkit: d-hnet-netkit
+	mkdir $@
+	perl -pe 's/d-hnet/t-hnet/g' < d-hnet-netkit/Dockerfile > $@/Dockerfile
+	cp $(wildcard d-hnet-netkit/*.sh) $@
+
+
+# Ubuntu target (derived from Debian, but not quite the same)
 
 u-base.docker: u-base-rsync
 
@@ -91,8 +104,19 @@ u-hnet-netkit: d-hnet-netkit
 	perl -pe 's/d-hnet/u-hnet/g' < d-hnet-netkit/Dockerfile > $@/Dockerfile
 	cp $(wildcard d-hnet-netkit/*.sh) $@
 
-%.docker: %
-	(cd $* && docker build -t $* .)
+# General pattern rules
+
+%.docker:
+	cd $* && docker build -t $* .
+
+%.sh: %.docker
+	docker run -i -t $*
+
+%.stop:
+	-docker stop $*
+
+%.kill:
+	-docker kill $*
 
 uclean:
 	rm -rf $(MADESUBDIRS)
@@ -101,10 +125,17 @@ uclean:
 	-docker rmi $*
 
 # Manual dependencies (so we can use make -j N)
+
 buildbot-master.docker: d-base.docker
+
 d-hnet.docker: d-base.docker
 d-hnet-netkit.docker: d-hnet.docker
+d-bb.docker: d-hnet.docker
+
+t-hnet.docker: t-base.docker
+t-hnet-netkit.docker: t-hnet.docker
+t-bb.docker: t-hnet.docker
+
 u-hnet.docker: u-base.docker
 u-hnet-netkit.docker: u-hnet.docker
-d-bb.docker: d-hnet.docker
 u-bb.docker: u-hnet.docker

@@ -1,4 +1,8 @@
 *~
+t-base/*.sh
+t-hnet
+t-hnet-netkit
+t-bb
 u-base/*.sh
 u-hnet
 u-hnet-netkit
