@@ -24,8 +24,15 @@ Features:
 
 - Buildbot 
  + master (using Debian stable)
- + slaves running <X> setup and building the 'generic' version
+ + slaves running <X> setup and building the 'generic' version with gcc/clang
  - slave running Debian and building two OpenWRT versions
   - 'trunk' (from official routing + other repositories)
   - 'latest' (from hnet-routing fork)
 
+Known misfeatures:
+
+- builds failing due to configure getpwd failing?
+
+=> you're probably running on BTRFS; please use BTRFS backend (add -d
+-s btrfs to docker daemon start-up arguments (e.g. at
+/etc/default/docker) and hope it addresses the problem)
