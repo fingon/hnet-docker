@@ -110,7 +110,7 @@ u-hnet-netkit: d-hnet-netkit
 	cd $* && docker build -t $* .
 
 %.sh: %.docker
-	docker run -i -t $*
+	docker run -i -v $(HOME):/hosthome:ro -t $* /bin/bash
 
 %.stop:
 	-docker stop $*
