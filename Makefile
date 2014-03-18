@@ -1,7 +1,7 @@
 DOCKERSUBDIRS=\
   d-base d-hnet d-hnet-netkit \
   u-base u-hnet u-hnet-netkit \
-  buildbot-master
+  buildbot-master d-bb u-bb
 
 # u-base is as-is (too much diff to d-base).
 # u-hnet and u-hnet-netkit are created as copies of d-hnet*, and then modified
@@ -18,15 +18,18 @@ stop: bb-stop dbb-stop ubb-stop
 
 dbb-start: d-bb.docker bb-start
 	./ensure-started.sh d-bb-slave || \
-          docker run --name d-bb-slave -link bb-master:master -d -v $(HOME)/hnet:/host-hnet d-bb
+          docker run --name d-bb-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro d-bb
+
+dbbsh: d-bb.docker
+	docker run -link bb-master:master -i -v $(HOME)/hnet:/host-hnet:ro d-bb /bin/bash
 
 ubb-start: u-bb.docker bb-start
 	./ensure-started.sh u-bb-slave || \
-          docker run --name u-bb-slave -link bb-master:master -d -v $(HOME)/hnet:/host-hnet u-bb
+          docker run --name u-bb-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro u-bb
 
 bb-start: buildbot-master.docker
 	./ensure-started.sh bb-master || \
-          docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet buildbot-master
+          docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro buildbot-master
 
 bb-stop:
 	-docker stop bb-master
@@ -68,6 +71,7 @@ u-bb: d-bb
 	perl -pe 's/d-bb/u-bb/g' \
 		> $@/Dockerfile
 	cp $(wildcard d-bb/*.sh) $@
+	cp $(wildcard d-bb/*.py) $@
 
 u-hnet-netkit: d-hnet-netkit
 	mkdir $@
