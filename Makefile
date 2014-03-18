@@ -5,19 +5,37 @@ DOCKERSUBDIRS=\
 
 # u-base is as-is (too much diff to d-base).
 # u-hnet and u-hnet-netkit are created as copies of d-hnet*, and then modified
-MADESUBDIRS=u-hnet u-hnet-netkit
+MADESUBDIRS=u-hnet u-hnet-netkit u-bb
 
 DOCKERBUILDS?=$(DOCKERSUBDIRS:%=%.docker)
 DOCKERCLEANS?=$(DOCKERSUBDIRS:%=%.clean)
 
 all: $(DOCKERBUILDS)
 
+start: bb-start dbb-start ubb-start
+
+stop: bb-stop dbb-stop ubb-stop
+
+dbb-start: d-bb.docker bb-start
+	./ensure-started.sh d-bb-slave || \
+          docker run --name d-bb-slave -link bb-master:master -d -v $(HOME)/hnet:/host-hnet d-bb
+
+ubb-start: u-bb.docker bb-start
+	./ensure-started.sh u-bb-slave || \
+          docker run --name u-bb-slave -link bb-master:master -d -v $(HOME)/hnet:/host-hnet u-bb
+
 bb-start: buildbot-master.docker
-	docker start bb-master || \
+	./ensure-started.sh bb-master || \
           docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet buildbot-master
 
 bb-stop:
-	docker stop bb-master || true
+	-docker stop bb-master
+
+dbb-stop:
+	-docker stop d-bb-slave
+
+ubb-stop:
+	-docker stop u-bb-slave
 
 dsh: d-hnet-netkit.docker
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t d-hnet-netkit /bin/bash
@@ -25,7 +43,7 @@ dsh: d-hnet-netkit.docker
 ush: u-hnet-netkit.docker
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t u-hnet-netkit /bin/bash
 
-clean: bb-stop $(DOCKERCLEANS) uclean rmi-none
+clean:    stop $(DOCKERCLEANS) uclean rmi-none
 
 rm-exited:
 	docker rm `docker ps -a | grep Exit | cut -d ' ' -f 1` 2>/dev/null || true
@@ -42,6 +60,14 @@ u-hnet: d-hnet
 	mkdir $@
 	perl -pe 's/d-base/u-base/g' < d-hnet/Dockerfile | \
 	perl -pe 's/d-hnet/u-hnet/g' > $@/Dockerfile
+
+u-bb: d-bb
+	mkdir $@
+	perl -pe 's/d-hnet/u-hnet/g' < d-bb/Dockerfile | \
+	perl -pe 's/debian/ubuntu/g' | \
+	perl -pe 's/d-bb/u-bb/g' \
+		> $@/Dockerfile
+	cp $(wildcard d-bb/*.sh) $@
 
 u-hnet-netkit: d-hnet-netkit
 	mkdir $@
@@ -63,3 +89,5 @@ d-hnet.docker: d-base.docker
 d-hnet-netkit.docker: d-hnet.docker
 u-hnet.docker: u-base.docker
 u-hnet-netkit.docker: u-hnet.docker
+d-bb.docker: d-hnet.docker
+u-bb.docker: u-hnet.docker

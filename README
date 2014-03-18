@@ -24,7 +24,7 @@ Features:
 
 - Buildbot 
  + master (using Debian stable)
- - slaves running <X> setup and building the 'generic' version
+ + slaves running <X> setup and building the 'generic' version
  - slave running Debian and building two OpenWRT versions
   - 'trunk' (from official routing + other repositories)
   - 'latest' (from hnet-routing fork)
