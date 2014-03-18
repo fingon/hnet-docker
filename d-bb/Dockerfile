@@ -6,8 +6,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Tue Mar 18 11:23:12 2014 mstenber
-# Last modified: Tue Mar 18 12:15:01 2014 mstenber
-# Edit time:     2 min
+# Last modified: Tue Mar 18 14:21:18 2014 mstenber
+# Edit time:     3 min
 #
 
 
@@ -17,7 +17,7 @@
 
 FROM d-hnet
 MAINTAINER "Markus Stenberg <fingon@iki.fi>"
-RUN apt-get -y install buildbot-slave
+RUN apt-get -y install buildbot-slave clang
 RUN mkdir /bbs
 ADD . /bbs
 CMD /bbs/run.sh debian pass
