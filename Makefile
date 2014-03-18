@@ -21,12 +21,14 @@ dbb-start: d-bb.docker bb-start
           docker run --name d-bb-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro d-bb
 
 dbbsh: d-bb.docker
-	docker run -link bb-master:master -i -v $(HOME)/hnet:/host-hnet:ro d-bb /bin/bash
+	docker run --link bb-master:master -i -t -v $(HOME)/hnet:/host-hnet:ro d-bb /bin/bash
 
 ubb-start: u-bb.docker bb-start
 	./ensure-started.sh u-bb-slave || \
           docker run --name u-bb-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro u-bb
 
+ubbsh: u-bb.docker
+	docker run --link bb-master:master -i -t -v $(HOME)/hnet:/host-hnet:ro u-bb /bin/bash
 bb-start: buildbot-master.docker
 	./ensure-started.sh bb-master || \
           docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro buildbot-master
