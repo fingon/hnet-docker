@@ -16,19 +16,22 @@ all: $(DOCKERSUBDIRS:%=%.docker)
 
 BUILDSLAVES=d-bb t-bb u-bb
 
+.PHONY: start
 start: rm-exited bb-master.start $(BUILDSLAVES:%=%-slave.start)
-	@true
 
+.PHONY: stop
 stop: bb-master.stop $(BUILDSLAVES:%=%-slave.stop)
-	@true
 
+.PHONY: kill
 kill: bb-master.kill $(BUILDSLAVES:%=%-slave.kill)
-	@true
 
 # master
 bb-master.start: buildbot-master.docker
 	./ensure-started.sh bb-master || \
           docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro buildbot-master
+
+bb-master.sh: buildbot-master.docker
+	docker run --name bb-master -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro -i -t buildbot-master /bin/bash
 
 # slaves
 %-slave.start: %.docker bb-master.start
@@ -43,6 +46,7 @@ dsh: d-hnet-netkit.docker
 ush: u-hnet-netkit.docker
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t u-hnet-netkit /bin/bash
 
+.PHONY: clean
 clean:    kill rm-exited $(DOCKERSUBDIRS:%=%.clean) uclean rmi-none
 
 rm-exited:
@@ -132,9 +136,9 @@ d-hnet.docker: d-base.docker
 d-hnet-netkit.docker: d-hnet.docker
 d-bb.docker: d-hnet.docker
 
-t-hnet.docker: t-base.docker
-t-hnet-netkit.docker: t-hnet.docker
-t-bb.docker: t-hnet.docker
+t-hnet.docker: t-base.docker t-hnet
+t-hnet-netkit.docker: t-hnet.docker t-hnet-netkit
+t-bb.docker: t-hnet.docker t-bb
 
 u-hnet.docker: u-base.docker
 u-hnet-netkit.docker: u-hnet.docker
