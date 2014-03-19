@@ -7,4 +7,8 @@ u-base/*.sh
 u-hnet
 u-hnet-netkit
 u-bb
+d32-base/*.sh
+d32-hnet
+d32-hnet-netkit
+d32-bb
 

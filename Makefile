@@ -1,12 +1,19 @@
+DEBIAN_MIRROR=http://ftp.fi.debian.org/debian
+MKIMAGE_DEBOOTSTRAP=/usr/share/docker.io/contrib/mkimage-debootstrap.sh
+# Note: If this script isn't available (it's part of docker.io contrib),
+# set the variable empty and get debian32 in some other way..
+
 DOCKERSUBDIRS=\
   d-base d-hnet d-hnet-netkit \
+  d32-base d32-hnet d32-hnet-netkit \
   t-base t-hnet t-hnet-netkit \
   u-base u-hnet u-hnet-netkit \
-  buildbot-master d-bb t-bb u-bb
+  buildbot-master d-bb d32-bb t-bb u-bb
 
 # u-base is as-is (too much diff to d-base).
 # u-hnet and u-hnet-netkit are created as copies of d-hnet*, and then modified
 MADESUBDIRS=\
+  d32-hnet d32-hnet-netkit d32-bb \
   t-hnet t-hnet-netkit t-bb \
   u-hnet u-hnet-netkit u-bb
 
@@ -14,7 +21,7 @@ all: $(DOCKERSUBDIRS:%=%.docker)
 
 ## Buildbot targets
 
-BUILDSLAVES=d-bb t-bb u-bb
+BUILDSLAVES=d-bb d32-bb t-bb u-bb
 
 .PHONY: start
 start: rm-exited bb-master.start $(BUILDSLAVES:%=%-slave.start)
@@ -24,6 +31,12 @@ stop: bb-master.stop $(BUILDSLAVES:%=%-slave.stop)
 
 .PHONY: kill
 kill: bb-master.kill $(BUILDSLAVES:%=%-slave.kill)
+
+# Fake docker creation
+debian32.docker: $(MKIMAGE_DEBOOTSTRAP)
+	docker images | grep -q '^debian32' || \
+		$(MKIMAGE_DEBOOTSTRAP) -a i386 debian32 wheezy $(DEBIAN_MIRROR)
+
 
 # master
 bb-master.start: buildbot-master.docker
@@ -54,6 +67,32 @@ rm-exited:
 
 rmi-none:
 	docker rmi `docker images | grep '<none>' | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3` 2>/dev/null || true
+
+# Debian 32 target (Debian stable, but with 32-bit userland)
+
+d32-base.docker: d32-base-rsync debian32.docker
+
+d32-base-rsync:
+	rsync -a $(wildcard d-base/*.sh) d32-base
+
+d32-hnet: d-hnet
+	mkdir $@
+	perl -pe 's/d-base/d32-base/g' < d-hnet/Dockerfile | \
+	perl -pe 's/d-hnet/d32-hnet/g' > $@/Dockerfile
+
+d32-bb: d-bb
+	mkdir $@
+	perl -pe 's/d-hnet/d32-hnet/g' < d-bb/Dockerfile | \
+	perl -pe 's/debian/debian32/g' | \
+	perl -pe 's/d-bb/d32-bb/g' \
+		> $@/Dockerfile
+	cp $(wildcard d-bb/*.sh) $@
+	cp $(wildcard d-bb/*.py) $@
+
+d32-hnet-netkit: d-hnet-netkit
+	mkdir $@
+	perl -pe 's/d-hnet/d32-hnet/g' < d-hnet-netkit/Dockerfile > $@/Dockerfile
+	cp $(wildcard d-hnet-netkit/*.sh) $@
 
 # Testing target (derived from Debian, but not quite the same)
 
@@ -135,6 +174,10 @@ buildbot-master.docker: d-base.docker
 d-hnet.docker: d-base.docker
 d-hnet-netkit.docker: d-hnet.docker
 d-bb.docker: d-hnet.docker
+
+d32-hnet.docker: d32-base.docker d32-hnet
+d32-hnet-netkit.docker: d32-hnet.docker d32-hnet-netkit
+d32-bb.docker: d32-hnet.docker d32-bb
 
 t-hnet.docker: t-base.docker t-hnet
 t-hnet-netkit.docker: t-hnet.docker t-hnet-netkit
