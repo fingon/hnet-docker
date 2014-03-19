@@ -2,7 +2,7 @@ DOCKERSUBDIRS=\
   d-base d-hnet d-hnet-netkit \
   t-base t-hnet t-hnet-netkit \
   u-base u-hnet u-hnet-netkit \
-  buildbot-master d-bb u-bb
+  buildbot-master d-bb t-bb u-bb
 
 # u-base is as-is (too much diff to d-base).
 # u-hnet and u-hnet-netkit are created as copies of d-hnet*, and then modified
