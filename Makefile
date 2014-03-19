@@ -30,7 +30,7 @@ bb-master.start: buildbot-master.docker
 	./ensure-started.sh bb-master || \
           docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro buildbot-master
 
-bb-master.sh: buildbot-master.docker
+bb-master.shell: buildbot-master.docker
 	docker run --name bb-master -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro -i -t buildbot-master /bin/bash
 
 # slaves
@@ -113,7 +113,7 @@ u-hnet-netkit: d-hnet-netkit
 %.docker:
 	cd $* && docker build -t $* .
 
-%.sh: %.docker
+%.shell: %.docker
 	docker run -i -v $(HOME):/hosthome:ro -t $* /bin/bash
 
 %.stop:
@@ -140,6 +140,6 @@ t-hnet.docker: t-base.docker t-hnet
 t-hnet-netkit.docker: t-hnet.docker t-hnet-netkit
 t-bb.docker: t-hnet.docker t-bb
 
-u-hnet.docker: u-base.docker
-u-hnet-netkit.docker: u-hnet.docker
-u-bb.docker: u-hnet.docker
+u-hnet.docker: u-base.docker u-hnet
+u-hnet-netkit.docker: u-hnet.docker u-hnet-netkit
+u-bb.docker: u-hnet.docker u-bb
