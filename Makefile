@@ -75,24 +75,24 @@ d32-base.docker: d32-base-rsync debian32.docker
 d32-base-rsync:
 	rsync -a $(wildcard d-base/*.sh) d32-base
 
-d32-hnet: d-hnet
-	mkdir $@
+d32-hnet/Dockerfile: d-hnet/Dockerfile
+	mkdir d32-hnet
 	perl -pe 's/d-base/d32-base/g' < d-hnet/Dockerfile | \
-	perl -pe 's/d-hnet/d32-hnet/g' > $@/Dockerfile
+	perl -pe 's/d-hnet/d32-hnet/g' > d32-hnet/Dockerfile
 
-d32-bb: d-bb
-	mkdir $@
-	perl -pe 's/d-hnet/d32-hnet/g' < d-bb/Dockerfile | \
+d32-bb/Dockerfile: d-bb/Dockerfile
+	mkdir d32-bb
+	perl -pe 's/d-hnet-netkit/d32-hnet/g' < d-bb/Dockerfile | \
 	perl -pe 's/debian/debian32/g' | \
 	perl -pe 's/d-bb/d32-bb/g' \
-		> $@/Dockerfile
-	cp $(wildcard d-bb/*.sh) $@
-	cp $(wildcard d-bb/*.py) $@
+		> d32-bb/Dockerfile
+	cp $(wildcard d-bb/*.sh) d32-bb
+	cp $(wildcard d-bb/*.py) d32-bb
 
-d32-hnet-netkit: d-hnet-netkit
-	mkdir $@
-	perl -pe 's/d-hnet/d32-hnet/g' < d-hnet-netkit/Dockerfile > $@/Dockerfile
-	cp $(wildcard d-hnet-netkit/*.sh) $@
+d32-hnet-netkit/Dockerfile: d-hnet-netkit/Dockerfile
+	mkdir d32-hnet-netkit
+	perl -pe 's/d-hnet/d32-hnet/g' < d-hnet-netkit/Dockerfile > d32-hnet-netkit/Dockerfile
+	cp $(wildcard d-hnet-netkit/*.sh) d32-hnet-netkit
 
 # Testing target (derived from Debian, but not quite the same)
 
@@ -101,24 +101,24 @@ t-base.docker: t-base-rsync
 t-base-rsync:
 	rsync -a $(wildcard d-base/*.sh) t-base
 
-t-hnet: d-hnet
-	mkdir $@
+t-hnet/Dockerfile: d-hnet/Dockerfile
+	mkdir t-hnet
 	perl -pe 's/d-base/t-base/g' < d-hnet/Dockerfile | \
-	perl -pe 's/d-hnet/t-hnet/g' > $@/Dockerfile
+	perl -pe 's/d-hnet/t-hnet/g' > t-hnet/Dockerfile
 
-t-bb: d-bb
-	mkdir $@
-	perl -pe 's/d-hnet/t-hnet/g' < d-bb/Dockerfile | \
+t-bb/Dockerfile: d-bb/Dockerfile
+	mkdir t-bb
+	perl -pe 's/d-hnet-netkit/t-hnet/g' < d-bb/Dockerfile | \
 	perl -pe 's/debian/testing/g' | \
 	perl -pe 's/d-bb/t-bb/g' \
-		> $@/Dockerfile
-	cp $(wildcard d-bb/*.sh) $@
-	cp $(wildcard d-bb/*.py) $@
+		> t-bb/Dockerfile
+	cp $(wildcard d-bb/*.sh) t-bb
+	cp $(wildcard d-bb/*.py) t-bb
 
-t-hnet-netkit: d-hnet-netkit
-	mkdir $@
-	perl -pe 's/d-hnet/t-hnet/g' < d-hnet-netkit/Dockerfile > $@/Dockerfile
-	cp $(wildcard d-hnet-netkit/*.sh) $@
+t-hnet-netkit/Dockerfile: d-hnet-netkit/Dockerfile
+	mkdir t-hnet-netkit
+	perl -pe 's/d-hnet/t-hnet/g' < d-hnet-netkit/Dockerfile > t-hnet-netkit/Dockerfile
+	cp $(wildcard d-hnet-netkit/*.sh) t-hnet-netkit
 
 
 # Ubuntu target (derived from Debian, but not quite the same)
@@ -128,28 +128,28 @@ u-base.docker: u-base-rsync
 u-base-rsync:
 	rsync -a $(wildcard d-base/*.sh) u-base
 
-u-hnet: d-hnet
-	mkdir $@
+u-hnet/Dockerfile: d-hnet/Dockerfile
+	mkdir u-hnet
 	perl -pe 's/d-base/u-base/g' < d-hnet/Dockerfile | \
-	perl -pe 's/d-hnet/u-hnet/g' > $@/Dockerfile
+	perl -pe 's/d-hnet/u-hnet/g' > u-hnet/Dockerfile
 
-u-bb: d-bb
-	mkdir $@
-	perl -pe 's/d-hnet/u-hnet/g' < d-bb/Dockerfile | \
+u-bb/Dockerfile: d-bb/Dockerfile
+	mkdir u-bb
+	perl -pe 's/d-hnet-netkit/u-hnet/g' < d-bb/Dockerfile | \
 	perl -pe 's/debian/ubuntu/g' | \
 	perl -pe 's/d-bb/u-bb/g' \
-		> $@/Dockerfile
-	cp $(wildcard d-bb/*.sh) $@
-	cp $(wildcard d-bb/*.py) $@
+		> u-bb/Dockerfile
+	cp $(wildcard d-bb/*.sh) u-bb
+	cp $(wildcard d-bb/*.py) u-bb
 
-u-hnet-netkit: d-hnet-netkit
-	mkdir $@
-	perl -pe 's/d-hnet/u-hnet/g' < d-hnet-netkit/Dockerfile > $@/Dockerfile
-	cp $(wildcard d-hnet-netkit/*.sh) $@
+u-hnet-netkit/Dockerfile: d-hnet-netkit/Dockerfile
+	mkdir u-hnet-netkit
+	perl -pe 's/d-hnet/u-hnet/g' < d-hnet-netkit/Dockerfile > u-hnet-netkit/Dockerfile
+	cp $(wildcard d-hnet-netkit/*.sh) u-hnet-netkit
 
 # General pattern rules
 
-%.docker:
+%.docker: %/Dockerfile
 	cd $* && docker build -t $* .
 
 %.shell: %.docker
@@ -173,16 +173,16 @@ buildbot-master.docker: d-base.docker
 
 d-hnet.docker: d-base.docker
 d-hnet-netkit.docker: d-hnet.docker
-d-bb.docker: d-hnet.docker
+d-bb.docker: d-hnet-netkit.docker
 
-d32-hnet.docker: d32-base.docker d32-hnet
-d32-hnet-netkit.docker: d32-hnet.docker d32-hnet-netkit
-d32-bb.docker: d32-hnet.docker d32-bb
+d32-hnet.docker: d32-base.docker d32-hnet/Dockerfile
+d32-hnet-netkit.docker: d32-hnet.docker d32-hnet-netkit/Dockerfile
+d32-bb.docker: d32-hnet.docker d32-bb/Dockerfile
 
-t-hnet.docker: t-base.docker t-hnet
-t-hnet-netkit.docker: t-hnet.docker t-hnet-netkit
-t-bb.docker: t-hnet.docker t-bb
+t-hnet.docker: t-base.docker t-hnet/Dockerfile
+t-hnet-netkit.docker: t-hnet.docker t-hnet-netkit/Dockerfile
+t-bb.docker: t-hnet.docker t-bb/Dockerfile
 
-u-hnet.docker: u-base.docker u-hnet
-u-hnet-netkit.docker: u-hnet.docker u-hnet-netkit
-u-bb.docker: u-hnet.docker u-bb
+u-hnet.docker: u-base.docker u-hnet/Dockerfile
+u-hnet-netkit.docker: u-hnet.docker u-hnet-netkit/Dockerfile
+u-bb.docker: u-hnet.docker u-bb/Dockerfile
