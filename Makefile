@@ -22,6 +22,7 @@ all: $(DOCKERSUBDIRS:%=%.docker)
 ## Buildbot targets
 
 BUILDSLAVES=d-bb d32-bb t-bb u-bb
+# omit Ubuntu until new LTS is available; 12.04 doesn't have recent cmake
 
 .PHONY: start
 start: rm-exited bb-master.start $(BUILDSLAVES:%=%-slave.start)

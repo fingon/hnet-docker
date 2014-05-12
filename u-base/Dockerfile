@@ -1,5 +1,5 @@
 ## -*- docker-image-name: "d-base" -*-
-FROM ubuntu:12.04
+FROM ubuntu:14.04
 MAINTAINER "Markus Stenberg <fingon@iki.fi>"
 RUN mkdir -p /usr/local
 ADD . /usr/local/
