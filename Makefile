@@ -41,23 +41,28 @@ debian32.docker: $(MKIMAGE_DEBOOTSTRAP)
 
 # master
 bb-master.start: buildbot-master.docker
+	sleep 1 # stupid race condition in Docker 0.11.0 at least
 	./ensure-started.sh bb-master || \
           docker run --name bb-master -d -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro buildbot-master
 
 bb-master.shell: buildbot-master.docker
+	sleep 1 # stupid race condition in Docker 0.11.0 at least
 	docker run --name bb-master -p 8010:8010 -v $(HOME)/hnet:/host-hnet:ro -i -t buildbot-master /bin/bash
 
 # slaves
 %-slave.start: %.docker bb-master.start
+	sleep 1 # stupid race condition in Docker 0.11.0 at least
 	./ensure-started.sh $*-slave || \
           docker run --name $*-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro $*
 
 # Netkit utilities
 
 dsh: d-hnet-netkit.docker
+	sleep 1 # stupid race condition in Docker 0.11.0 at least
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t d-hnet-netkit /bin/bash
 
 ush: u-hnet-netkit.docker
+	sleep 1 # stupid race condition in Docker 0.11.0 at least
 	docker run --privileged -v $(HOME)/hnet/netkit/fs:/hnet/netkit/fs:ro -i -t u-hnet-netkit /bin/bash
 
 .PHONY: clean
@@ -154,6 +159,7 @@ u-hnet-netkit/Dockerfile: d-hnet-netkit/Dockerfile
 	cd $* && docker build -t $* .
 
 %.shell: %.docker
+	sleep 1 # stupid race condition in Docker 0.11.0 at least
 	docker run -i -v $(HOME):/hosthome:ro -t $* /bin/bash
 
 %.stop:
