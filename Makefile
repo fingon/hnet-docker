@@ -53,7 +53,7 @@ bb-master.shell: buildbot-master.docker
 %-slave.start: %.docker bb-master.start
 	sleep 1 # stupid race condition in Docker 0.11.0 at least
 	./ensure-started.sh $*-slave || \
-          docker run --name $*-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro $*
+          (docker rm $*-slave ; docker run --name $*-slave --link bb-master:master -d -v $(HOME)/hnet:/host-hnet:ro $* )
 
 # Netkit utilities
 
