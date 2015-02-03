@@ -8,8 +8,8 @@
 # Copyright (c) 2014 cisco Systems, Inc.
 #
 # Created:       Mon Mar 17 13:15:29 2014 mstenber
-# Last modified: Mon Mar 17 13:52:15 2014 mstenber
-# Edit time:     5 min
+# Last modified: Tue Feb  3 14:33:51 2015 mstenber
+# Edit time:     7 min
 #
 
 
@@ -21,8 +21,15 @@ GW=`ip route | egrep '^default ' | cut -d ' ' -f 3`
 [ -z $GW ] && exit 0
 
 # Assumption: 'nc' is available; prefer traditional but non-traditional ok too
-NC=`[ -f /bin/nc.traditional ] && echo nc.traditional || echo nc`
-$NC -z $GW $PROXY_PORT || exit 0
+if [ -x /bin/nc.traditional ]
+then
+     /bin/nc.traditional -z $GW $PROXY_PORT || exit 0
+elif [ -x /bin/nc ]
+then
+     /bin/nc -z $GW $PROXY_PORT || exit 0
+else
+    exit 0
+fi
 
 # yay, found a proxy
 echo http://$GW:$PROXY_PORT 
