@@ -7,6 +7,7 @@ Known dependencies:
 
 - docker.io (usable as 'docker')
 - git (to get this)
+- debootstrap (to build debian32 variant)
 - make
 
 Assumptions:
@@ -17,10 +18,10 @@ Assumptions:
 Features:
 
 + Debian-based ~development setup
- + stable (aka wheezy aka 7.X)
+ + stable (aka jessie aka 8.x)
 
 + Ubuntu-based ~development setup
- + LTS (aka 12.04)
+ + LTS (aka 14.04)
 
 - Buildbot 
  + master (using Debian stable)

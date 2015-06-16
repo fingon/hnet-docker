@@ -36,7 +36,7 @@ kill: bb-master.kill $(BUILDSLAVES:%=%-slave.kill)
 # Fake docker creation
 debian32.docker: $(MKIMAGE_DEBOOTSTRAP)
 	docker images | grep -q '^debian32' || \
-		$(MKIMAGE_DEBOOTSTRAP) -a i386 debian32 wheezy $(DEBIAN_MIRROR)
+		$(MKIMAGE_DEBOOTSTRAP) -a i386 debian32 stable $(DEBIAN_MIRROR)
 
 
 # master
